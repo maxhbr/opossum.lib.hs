@@ -177,7 +177,7 @@ data ScanossFinding =
   ScanossFinding
     { _ScanossFinding_id           :: String
     , _ScanossFinding_matched      :: String
-    , _ScanossFinding_purl         :: [PURL]
+    , _ScanossFinding_purl         :: [Purl]
     , _ScanossFinding_vendor       :: Maybe T.Text
     , _ScanossFinding_component    :: Maybe T.Text
     , _ScanossFinding_version      :: Maybe T.Text
@@ -217,7 +217,7 @@ instance A.FromJSON ScanossFinding where
              AKM.filterWithKey (\key -> const (not (key `elem` keysToFilter))))
               v
       ScanossFinding <$> v A..: "id" <*> v A..: "matched" <*>
-        (fmap (Maybe.mapMaybe (parsePURL)) $ v A..: "purl") <*>
+        (fmap (Maybe.mapMaybe (parsePurl)) $ v A..: "purl") <*>
         v A..:? "vendor" <*>
         v A..:? "component" <*>
         v A..:? "version" <*>
