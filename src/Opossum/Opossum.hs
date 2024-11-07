@@ -31,6 +31,7 @@ module Opossum.Opossum
   , justExcludeFromNoticeFlags
   , Opossum(..)
   , writeOpossumStats
+  , module X
   ) where
 
 import qualified Data.Aeson               as A
@@ -48,7 +49,7 @@ import qualified Data.Text                as T
 import           Data.UUID                (UUID)
 import qualified Data.Vector              as V
 import           GHC.Generics
-import           PURL.PURL
+import           Purl.Purl                as X
 import qualified System.FilePath          as FP
 import           System.IO                (Handle, hClose, hPutStrLn, stdout)
 import qualified System.IO                as IO
@@ -183,17 +184,17 @@ data Coordinates =
     , _packageNamespace    :: Maybe T.Text
     , _packageName         :: Maybe T.Text
     , _packageVersion      :: Maybe T.Text
-    , _packagePURLAppendix :: Maybe T.Text
+    , _packagePurlAppendix :: Maybe T.Text
     }
   deriving (Show, Generic, Eq)
 
 opoossumCoordinatesPreObjectList :: Coordinates -> [A.Pair]
-opoossumCoordinatesPreObjectList (Coordinates packageType packageNamespace packageName packageVersion packagePURLAppendix) =
+opoossumCoordinatesPreObjectList (Coordinates packageType packageNamespace packageName packageVersion packagePurlAppendix) =
   [ "packageType" A..= packageType
   , "packageNamespace" A..= packageNamespace
   , "packageName" A..= packageName
   , "packageVersion" A..= packageVersion
-  , "packagePURLAppendix" A..= packagePURLAppendix
+  , "packagePurlAppendix" A..= packagePurlAppendix
   ]
 
 instance A.ToJSON Coordinates where
@@ -206,27 +207,33 @@ instance A.FromJSON Coordinates where
       packageNamespace <- v A..:? "packageNamespace"
       packageName <- v A..:? "packageName"
       packageVersion <- v A..:? "packageVersion"
-      packagePURLAppendix <- v A..:? "packagePURLAppendix"
+      packagePurlAppendix <- v A..:? "packagePurlAppendix"
       return $
         Coordinates
           packageType
           packageNamespace
           packageName
           packageVersion
-          packagePURLAppendix
+          packagePurlAppendix
 
-purlToCoordinates :: PURL -> Coordinates
-purlToCoordinates (PURL { _PURL_type = type_
-                        , _PURL_namespace = namespace
-                        , _PURL_name = name
-                        , _PURL_version = version
-                        }) =
-  Coordinates
-    (fmap (T.pack . show) type_)
-    (fmap T.pack namespace)
-    (Just $ T.pack name)
-    (fmap T.pack version)
-    Nothing -- TODO: appendix
+purlToCoordinates :: Purl -> Coordinates
+purlToCoordinates (purl@Purl { purlType = type_
+                             , purlName = name
+                             , purlVersion = version
+                             }) =
+  let
+      packageNamespace = case purlNamespace purl of
+        "" -> Nothing
+        ns -> Just (T.pack ns)
+      packageVersion = case version of
+        "" -> Nothing
+        v  -> Just (T.pack v)
+    in Coordinates
+          ((Just . T.pack) type_)
+          packageNamespace
+          (Just $ T.pack name)
+          packageVersion
+          Nothing -- TODO: appendix
 
 coordinatesAreNotNull :: Coordinates -> Bool
 coordinatesAreNotNull (Coordinates Nothing Nothing _ Nothing _) = False

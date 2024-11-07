@@ -26,7 +26,6 @@ module Opossum.OpossumScancodeUtils
 
 import           Opossum.Opossum
 import           Opossum.OpossumUtils
-import           PURL.PURL
 
 import qualified Control.Monad.State      as MTL
 import qualified Data.Aeson               as A
@@ -144,7 +143,7 @@ renderLicense licenses =
 -}
 data ScancodePackage =
   ScancodePackage
-    { _scp_purl         :: Maybe PURL
+    { _scp_purl         :: Maybe Purl
     , _scp_licenses     :: SPDX.MaybeLicenseExpression
     , _scp_copyright    :: Maybe String
     , _scp_dependencies :: [ScancodePackage]
@@ -157,7 +156,7 @@ instance A.FromJSON ScancodePackage where
       purl <-
         v A..:? "purl" >>=
         (\case
-           Just purl -> return $ parsePURL purl
+           Just purl -> return $ parsePurl purl
            Nothing   -> return Nothing)
       dependencies <-
         (v A..:? "dependencies" >>=
@@ -275,12 +274,12 @@ opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
                                                 }) providedPath =
   let typeFromPurl =
         case purl of
-          Just (PURL {_PURL_type = t}) -> maybe "generic" show t
+          Just (Purl {_Purl_type = t}) -> maybe "generic" show t
           _                            -> "generic"
       pathFromPurl =
         typeFromPurl FP.</>
         case purl of
-          Just (PURL {_PURL_namespace = ns, _PURL_name = n, _PURL_version = v}) ->
+          Just (Purl {_Purl_namespace = ns, _Purl_name = n, _Purl_version = v}) ->
             foldl1 (FP.</>) $
             maybeToList ns ++ [intercalate "@" $ n : maybeToList v]
           _ -> "UNKNOWN"

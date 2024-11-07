@@ -20,7 +20,6 @@ module Opossum.OpossumDependencyCheckUtils
 
 import           Opossum.Opossum
 import           Opossum.OpossumUtils
-import           PURL.PURL
 
 import qualified Control.Monad.State      as MTL
 import qualified Data.Aeson               as A
@@ -125,7 +124,7 @@ instance A.FromJSON DependencyCheckEvidence where
  -}
 data DependencyCheckPackage =
   DependencyCheckPackage
-    { _dcp_id          :: Either String PURL
+    { _dcp_id          :: Either String Purl
     , _dcp_url         :: Maybe T.Text
     , _dcp_description :: Maybe String
     , _dcp_confidence  :: Maybe DependencyCheckConfidence
@@ -142,7 +141,7 @@ instance A.FromJSON DependencyCheckPackage where
              (\case
                 Just purl -> Right purl
                 Nothing   -> Left raw)
-               (parsePURL raw))
+               (parsePurl raw))
           (v A..: "id") <*>
         v A..:? "url" <*>
         v A..:? "description" <*>
@@ -439,8 +438,8 @@ dependencyCheckPackageToCoordinates (DependencyCheckPackage {_dcp_id = id}) =
     Right purl -> purlToCoordinates purl
     Left raw -> Coordinates (Just (T.pack raw)) Nothing Nothing Nothing Nothing
 
-evidenceToPURLs :: Map.Map String [DependencyCheckEvidence] -> [PURL]
-evidenceToPURLs evidence =
+evidenceToPurls :: Map.Map String [DependencyCheckEvidence] -> [Purl]
+evidenceToPurls evidence =
   let findBestFromEvidences :: [DependencyCheckEvidence] -> Maybe String
       findBestFromEvidences []    = Nothing
       findBestFromEvidences (e:_) = Just $ _dce_value e
@@ -452,14 +451,14 @@ evidenceToPURLs evidence =
    in maybeToList $
       fmap
         (\product' ->
-           PURL Nothing Nothing vendor product' version Nothing Nothing)
+           Purl Nothing Nothing vendor product' version Nothing Nothing)
         product
 
 evidenceToPackages ::
      Map.Map String [DependencyCheckEvidence] -> [DependencyCheckPackage]
 evidenceToPackages =
   map (\purl -> DependencyCheckPackage (Right purl) Nothing Nothing Nothing) .
-  evidenceToPURLs
+  evidenceToPurls
 
 dependencyCheckDependencyToOpossum :: DependencyCheckDependency -> IO Opossum
 dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtual = isVirtual
