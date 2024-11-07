@@ -26,7 +26,6 @@ module Opossum.OpossumScancodeUtils
 
 import           Opossum.Opossum
 import           Opossum.OpossumUtils
-import           PURL.PURL
 
 import qualified Control.Monad.State      as MTL
 import qualified Data.Aeson               as A
